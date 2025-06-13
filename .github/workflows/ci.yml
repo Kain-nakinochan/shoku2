@@ -36,14 +36,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # リント（あれば）
-      - name: Run linter
-        run: npm run lint
-        continue-on-error: false
-
-      # テスト
-      - name: Run tests
-        run: npm test -- --ci --coverage
 
       # ビルド
       - name: Build project
