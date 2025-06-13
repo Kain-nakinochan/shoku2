@@ -1,0 +1,81 @@
+name: CI
+
+# main ブランチ（およびプルリクエスト）への変更を検知
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]  # 複数の Node.js バージョンで実行
+
+    steps:
+      # コードをチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.js をセットアップ（依存キャッシュ付き）
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # 依存インストール
+      - name: Install dependencies
+        run: npm ci
+
+      # リント（あれば）
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: false
+
+      # テスト
+      - name: Run tests
+        run: npm test -- --ci --coverage
+
+      # ビルド
+      - name: Build project
+        run: npm run build
+
+      # ビルド成果物のアーティファクト保存（任意）
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: |
+            build/
+            dist/
+
+  # 例：Vercel などへ自動デプロイする場合
+  deploy:
+    name: Deploy to Vercel
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel --prod --confirm
