@@ -1,6 +1,6 @@
+# CI設定
 name: CI
 
-# main ブランチ（およびプルリクエスト）への変更を検知
 on:
   push:
     branches:
@@ -52,14 +52,14 @@ jobs:
       # ビルド成果物のアーティファクト保存（任意）
       - name: Upload build artifacts
         if: success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # v4に更新
         with:
           name: build
           path: |
             build/
             dist/
-
-  # 例：Vercel などへ自動デプロイする場合
+          
+  # デプロイ（例：Vercel）
   deploy:
     name: Deploy to Vercel
     needs: build-and-test
